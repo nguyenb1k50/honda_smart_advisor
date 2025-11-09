@@ -16,10 +16,6 @@ OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("AZURE_OPENAI_API_BASE")
 DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
-print("OPENAI_API_KEY:", os.getenv("AZURE_OPENAI_API_KEY"))
-print("OPENAI_API_BASE:", os.getenv("AZURE_OPENAI_API_BASE"))
-print("DEPLOYMENT_NAME:", os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"))
-
 # === Step 1: Load and split PDF documents ===
 def load_and_split_pdfs(pdf_files):
     all_documents = []
