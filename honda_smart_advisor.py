@@ -18,6 +18,9 @@ DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
 AZURE_CHAT_OPENAI_API_KEY = os.getenv("AZURE_CHAT_OPENAI_API_KEY")
 AZURE_CHAT_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_CHAT_OPENAI_DEPLOYMENT_NAME")
+
+
+
 # === Step 1: Load and split PDF documents ===
 def load_and_split_pdfs(pdf_files):
     all_documents = []
@@ -110,7 +113,7 @@ def run_streamlit_app(rag_chain):
 
 # === Main Execution ===
 if __name__ == "__main__":
-    pdf_files = ["city.pdf", "crv.pdf"]
+    pdf_files = ["city-small.pdf", "crv.pdf"]
     documents = load_and_split_pdfs(pdf_files)
     vectorstore = create_chroma_vectorstore(documents)
     rag_chain = create_rag_chain(vectorstore)
