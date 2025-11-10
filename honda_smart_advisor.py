@@ -16,6 +16,8 @@ OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("AZURE_OPENAI_API_BASE")
 DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
+AZURE_CHAT_OPENAI_API_KEY = os.getenv("AZURE_CHAT_OPENAI_API_KEY")
+AZURE_CHAT_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_CHAT_OPENAI_DEPLOYMENT_NAME")
 # === Step 1: Load and split PDF documents ===
 def load_and_split_pdfs(pdf_files):
     all_documents = []
@@ -49,9 +51,9 @@ def create_chroma_vectorstore(documents, persist_directory="./honda_chroma"):
 def create_rag_chain(vectorstore):
     retriever = vectorstore.as_retriever()
     llm = AzureChatOpenAI(
-        api_key=OPENAI_API_KEY,
+        api_key=AZURE_CHAT_OPENAI_API_KEY,
         openai_api_base=OPENAI_API_BASE,
-        deployment_name=DEPLOYMENT_NAME,
+        deployment_name=AZURE_CHAT_OPENAI_DEPLOYMENT_NAME,
         openai_api_type="azure",
         openai_api_version="2023-07-01-preview"
     )

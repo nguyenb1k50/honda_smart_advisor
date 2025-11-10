@@ -17,6 +17,7 @@ venv\Scripts\activate     # Trên Windows
 3. Cài đặt thư viện
 pip install -r requirements.txt
 4. Chạy ứng dụng Streamlit
+venv\Scripts\activate
 streamlit run honda_smart_advisor.py
 http://localhost:8501
 chuc nang:
