@@ -8,7 +8,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import AzureOpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 # Load environment variables
 load_dotenv()
@@ -36,10 +36,10 @@ def load_and_split_pdfs(pdf_files):
 
 # === Step 2: Create embeddings and store in ChromaDB ===
 def create_chroma_vectorstore(documents, persist_directory="./honda_chroma"):
-    embedding_model = AzureOpenAIEmbeddings(
-    azure_deployment=DEPLOYMENT_NAME,
-    openai_api_key=OPENAI_API_KEY,
-    azure_endpoint=OPENAI_API_BASE,
+    embedding_model = OpenAIEmbeddings(
+    model=DEPLOYMENT_NAME,
+    api_key=OPENAI_API_KEY,
+    openai_api_base=OPENAI_API_BASE,
     openai_api_version="2023-05-15"
     )
     
@@ -55,9 +55,8 @@ def create_rag_chain(vectorstore):
     retriever = vectorstore.as_retriever()
     llm = AzureChatOpenAI(
         api_key=AZURE_CHAT_OPENAI_API_KEY,
-        openai_api_base=OPENAI_API_BASE,
+        azure_endpoint=OPENAI_API_BASE,
         deployment_name=AZURE_CHAT_OPENAI_DEPLOYMENT_NAME,
-        openai_api_type="azure",
         openai_api_version="2023-07-01-preview"
     )
     prompt = PromptTemplate.from_template("Dựa trên thông tin sau đây: {context} Hãy trả lời câu hỏi: {question}"
