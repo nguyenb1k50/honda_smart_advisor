@@ -20,7 +20,4 @@ pip install -r requirements.txt
 venv\Scripts\activate
 streamlit run honda_smart_advisor.py
 http://localhost:8501
-- chuc nang:
-- Tư vấn xe
-- So sánh xe
-- Đề xuất xe
+ Thong tin xe
