@@ -24,7 +24,7 @@ AZURE_CHAT_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_CHAT_OPENAI_DEPLOYMENT_NAME
 # === Step 1: Load and split PDF documents ===
 def load_and_split_pdfs(pdf_files):
     all_documents = []
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(separators=['\n', '.', ' ', ''], chunk_size=100, chunk_overlap=10)
     for pdf_file in pdf_files:
         loader = UnstructuredPDFLoader(pdf_file)
         docs = loader.load()
@@ -112,7 +112,7 @@ def run_streamlit_app(rag_chain):
 
 # === Main Execution ===
 if __name__ == "__main__":
-    pdf_files = ["city-small.pdf", "crv.pdf"]
+    pdf_files = ["city.pdf", "crv.pdf"]
     documents = load_and_split_pdfs(pdf_files)
     vectorstore = create_chroma_vectorstore(documents)
     rag_chain = create_rag_chain(vectorstore)
