@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 from py2neo import Graph, Node, Relationship
 from langchain_text_splitters import TokenTextSplitter
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_community.graphs import Neo4jGraph
+
 
 
 
@@ -67,7 +69,7 @@ class GraphSchema(BaseModel):
 parser = PydanticOutputParser(pydantic_object=GraphSchema)
 
 # === Step 1: Extract text from PDFs with chunking ===
-def extract_text_chunks(pdf_files, chunk_size=100, chunk_overlap=20):
+def extract_text_chunks(pdf_files, chunk_size=1000, chunk_overlap=20):
     documents = []
     text_splitter = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
    
@@ -115,34 +117,150 @@ def extract_text_chunks(pdf_files, chunk_size=100, chunk_overlap=20):
 
 def parse_graph_data(chunks):
     graph_documents = llm_transformer.convert_to_graph_documents(chunks)
+    print("graph_documents", graph_documents)
     return graph_documents
 # === Step 3: Load vào Neo4j ===
 
-def load_graph_to_neo4j(graph_data):
-    all_nodes = []
-    all_relationships = []
-    for item in graph_data:
-        all_nodes.extend(item.nodes)
-        all_relationships.extend(item.relationships)
+# def load_graph_to_neo4j(graph_data):
+#     all_nodes = []
+#     all_relationships = []
+#     for item in graph_data:
+#         all_nodes.extend(item.nodes)
+#         all_relationships.extend(item.relationships)
 
-    node_map = {}
+#     node_map = {}
+#     for node in all_nodes:
+#         n = Node(node.type, **node.properties)
+#         graph.merge(n, node["type"], "name")
+#         node_map[f"{node.type}:{node.properties['name']}"] = n
+#     for rel in all_relationships:
+#         start = node_map.get(rel["start_node"])
+#         end = node_map.get(rel["end_node"])
+#         if start and end:
+#             r = Relationship(start, rel["type"], end)
+#             graph.merge(r)
+from py2neo import Graph, Node, Relationship
+
+def load_graph_to_neo4j(graph_data, graph):
+    # Mock data (có thể thay bằng graph_data thực tế)
+    all_nodes = [
+        {"type": "Entity", "properties": {"name": "Car", "category": "Vehicle"}},
+        {"type": "Entity", "properties": {"name": "Bike", "category": "Vehicle"}},
+        {"type": "Attribute", "properties": {"name": "Color", "value": "Red"}},
+        {"type": "Attribute", "properties": {"name": "Engine", "value": "V8"}}
+    ]
+
+    all_relationships = [
+        {
+            "source_node_id": "Car",
+            "source_node_type": "Entity",
+            "target_node_id": "Color",
+            "target_node_type": "Attribute",
+            "type": "has_attribute"
+        },
+        {
+            "source_node_id": "Car",
+            "source_node_type": "Entity",
+            "target_node_id": "Engine",
+            "target_node_type": "Attribute",
+            "type": "has_attribute"
+        },
+        {
+            "source_node_id": "Bike",
+            "source_node_type": "Entity",
+            "target_node_id": "Color",
+            "target_node_type": "Attribute",
+            "type": "has_attribute"
+        }
+    ]
+
+    # Tạo node bằng Cypher MERGE
     for node in all_nodes:
-        n = Node(node.type, **node["properties"])
-        graph.merge(n, node["type"], "name")
-        node_map[f"{node.type}:{node['properties']['name']}"] = n
-    for rel in all_relationships:
-        start = node_map.get(rel["start_node"])
-        end = node_map.get(rel["end_node"])
-        if start and end:
-            r = Relationship(start, rel["type"], end)
-            graph.merge(r)
+        node_type = node.get("type")
+        properties = node.get("properties", {})
+        if not node_type or "name" not in properties:
+            print(f"⚠ Node thiếu thông tin: {node}")
+            continue
 
+        # Tạo câu lệnh Cypher động
+        set_clause = ", ".join([f"n.{k} = ${k}" for k in properties.keys() if k != "name"])
+        cypher = f"""
+        MERGE (n:{node_type} {{name: $name}})
+        SET {set_clause}
+        """
+        graph.query(cypher, params=properties)
+
+    # Tạo relationship bằng Cypher MERGE
+    for rel in all_relationships:
+        cypher_rel = f"""
+        MATCH (a:{rel['source_node_type']} {{name: $source_name}})
+        MATCH (b:{rel['target_node_type']} {{name: $target_name}})
+        MERGE (a)-[r:{rel['type']}]->(b)
+        """
+        graph.query(cypher_rel, params={
+            "source_name": rel["source_node_id"],
+            "target_name": rel["target_node_id"]
+        })
+
+    print("✅ Graph đã được load vào Neo4j thành công!")
 
 # === Main ETL ===
 if __name__ == "__main__":
     pdf_files = ["Camry.pdf", "crv.pdf"]
-    chunks = extract_text_chunks(pdf_files)
-    graph_data = parse_graph_data(chunks)
-    print("NNN", graph_data)
+    # chunks = extract_text_chunks(pdf_files)
+    # graph_data = parse_graph_data(chunks)
+        
+    graph_data = [
+        {
+            "nodes": [
+                {"type": "CarModel", "properties": {"name": "Honda Camry", "brand": "Honda", "segment": "Sedan"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "2.5L DOHC i-VTEC"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "8-speed automatic"}},
+                {"type": "Specification", "properties": {"name": "FuelType", "value": "Petrol"}},
+                {"type": "Feature", "properties": {"name": "Safety", "value": "Honda Sensing"}},
+                {"type": "Feature", "properties": {"name": "Infotainment", "value": "8-inch touchscreen"}}
+            ],
+            "relationships": [
+                {
+                    "source_node_id": "Honda Camry",
+                    "source_node_type": "CarModel",
+                    "target_node_id": "Engine",
+                    "target_node_type": "Specification",
+                    "type": "has_spec"
+                },
+                {
+                    "source_node_id": "Honda Camry",
+                    "source_node_type": "CarModel",
+                    "target_node_id": "Transmission",
+                    "target_node_type": "Specification",
+                    "type": "has_spec"
+                },
+                {
+                    "source_node_id": "Honda Camry",
+                    "source_node_type": "CarModel",
+                    "target_node_id": "FuelType",
+                    "target_node_type": "Specification",
+                    "type": "has_spec"
+                },
+                {
+                    "source_node_id": "Honda Camry",
+                    "source_node_type": "CarModel",
+                    "target_node_id": "Safety",
+                    "target_node_type": "Feature",
+                    "type": "has_feature"
+                },
+                {
+                    "source_node_id": "Honda Camry",
+                    "source_node_type": "CarModel",
+                    "target_node_id": "Infotainment",
+                    "target_node_type": "Feature",
+                    "type": "has_feature"
+                }
+            ]
+        }
+    ]
+
+    graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USER"), password=os.getenv("NEO4J_PASSWORD")
+)
     # graph_data = parse_graph_with_llm(chunks)
-    load_graph_to_neo4j(graph_data)
+    load_graph_to_neo4j(graph_data, graph)

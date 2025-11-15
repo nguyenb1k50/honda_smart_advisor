@@ -41,17 +41,40 @@ graph_transformer = LLMGraphTransformer(llm=llm)
 
 # === Step 5: Hàm xử lý câu hỏi ===
 
+# def ask_question(question):
+#     print("question", question)
+#     # Tạo Cypher query và lấy kết quả từ Neo4j
+#     raw_result = graph_chain.invoke({"query": question})
+
+#     print("raw_result",raw_result)
+#     # Biến đổi dữ liệu graph thành câu trả lời tự nhiên
+#     return graph_transformer(raw_result)
+
+
+# def ask_question(question):
+#     print("question:", question)
+
+#     try:
+#         # Gửi câu hỏi đến graph_chain (LangChain)
+#         raw_result = graph_chain.invoke({"query": question})
+#         print("raw_result:", raw_result)
+
+#         # Kiểm tra kết quả
+#         if not raw_result or len(raw_result) == 0:
+#             return "Không tìm thấy thông tin cho câu hỏi này."
+
+#         # Chuyển đổi kết quả thành câu trả lời tự nhiên
+#         answer = graph_transformer(raw_result)
+#         return answer
+
+#     except Exception as e:
+#         print(f"⚠ Lỗi khi xử lý câu hỏi: {e}")
+#         return "Đã xảy ra lỗi khi truy vấn dữ liệu."
 def ask_question(question):
-    print("question", question)
-    # Tạo Cypher query và lấy kết quả từ Neo4j
+    print("question:", question)
     raw_result = graph_chain.invoke({"query": question})
-
-    print("raw_result",raw_result)
-    # Biến đổi dữ liệu graph thành câu trả lời tự nhiên
-    return graph_transformer(raw_result)
-
-
-
+    print("raw_result:", raw_result)
+    return raw_result['result']
 # === Step 6: Streamlit UI ===
 def run_streamlit_app():
     st.set_page_config(page_title="Honda Smart Advisor (Graph)", layout="wide")
