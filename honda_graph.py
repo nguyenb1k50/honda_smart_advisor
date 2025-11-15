@@ -25,20 +25,20 @@ DEPLOYMENT_NAME = os.getenv("AZURE_CHAT_OPENAI_DEPLOYMENT_NAME")
 graph = Graph(os.getenv("NEO4J_URI"), auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD")))
 
 # Ensure Neo4j index for performance
-graph.run("""
-CREATE CONSTRAINT car_name_unique IF NOT EXISTS
-FOR (c:Car) REQUIRE c.name IS UNIQUE
-""")
+# graph.run("""
+# CREATE CONSTRAINT car_name_unique IF NOT EXISTS
+# FOR (c:Car) REQUIRE c.name IS UNIQUE
+# """)
 
-graph.run("""
-CREATE CONSTRAINT feature_name_unique IF NOT EXISTS
-FOR (f:Feature) REQUIRE f.name IS UNIQUE
-""")
+# graph.run("""
+# CREATE CONSTRAINT feature_name_unique IF NOT EXISTS
+# FOR (f:Feature) REQUIRE f.name IS UNIQUE
+# """)
 
-graph.run("""
-CREATE CONSTRAINT safety_name_unique IF NOT EXISTS
-FOR (s:Safety) REQUIRE s.name IS UNIQUE
-""")
+# graph.run("""
+# CREATE CONSTRAINT safety_name_unique IF NOT EXISTS
+# FOR (s:Safety) REQUIRE s.name IS UNIQUE
+# """)
 
 
 # LLM init
@@ -143,36 +143,13 @@ from py2neo import Graph, Node, Relationship
 
 def load_graph_to_neo4j(graph_data, graph):
     # Mock data (có thể thay bằng graph_data thực tế)
-    all_nodes = [
-        {"type": "Entity", "properties": {"name": "Car", "category": "Vehicle"}},
-        {"type": "Entity", "properties": {"name": "Bike", "category": "Vehicle"}},
-        {"type": "Attribute", "properties": {"name": "Color", "value": "Red"}},
-        {"type": "Attribute", "properties": {"name": "Engine", "value": "V8"}}
-    ]
+    all_nodes = []
 
-    all_relationships = [
-        {
-            "source_node_id": "Car",
-            "source_node_type": "Entity",
-            "target_node_id": "Color",
-            "target_node_type": "Attribute",
-            "type": "has_attribute"
-        },
-        {
-            "source_node_id": "Car",
-            "source_node_type": "Entity",
-            "target_node_id": "Engine",
-            "target_node_type": "Attribute",
-            "type": "has_attribute"
-        },
-        {
-            "source_node_id": "Bike",
-            "source_node_type": "Entity",
-            "target_node_id": "Color",
-            "target_node_type": "Attribute",
-            "type": "has_attribute"
-        }
-    ]
+    all_relationships = []
+
+    for item in graph_data:
+        all_nodes.extend(item["nodes"])
+        all_relationships.extend(item["relationships"])
 
     # Tạo node bằng Cypher MERGE
     for node in all_nodes:
@@ -213,53 +190,90 @@ if __name__ == "__main__":
     graph_data = [
         {
             "nodes": [
-                {"type": "CarModel", "properties": {"name": "Honda Camry", "brand": "Honda", "segment": "Sedan"}},
-                {"type": "Specification", "properties": {"name": "Engine", "value": "2.5L DOHC i-VTEC"}},
-                {"type": "Specification", "properties": {"name": "Transmission", "value": "8-speed automatic"}},
+                {"type": "CarModel", "properties": {"name": "Honda CR-V", "brand": "Honda", "segment": "SUV"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "1.5L VTEC Turbo"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "CVT"}},
                 {"type": "Specification", "properties": {"name": "FuelType", "value": "Petrol"}},
+                {"type": "Feature", "properties": {"name": "Safety", "value": "Honda Sensing"}},
+                {"type": "Feature", "properties": {"name": "Infotainment", "value": "7-inch touchscreen"}}
+            ],
+            "relationships": [
+                {"source_node_id": "Honda CR-V", "source_node_type": "CarModel", "target_node_id": "Engine", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda CR-V", "source_node_type": "CarModel", "target_node_id": "Transmission", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda CR-V", "source_node_type": "CarModel", "target_node_id": "FuelType", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda CR-V", "source_node_type": "CarModel", "target_node_id": "Safety", "target_node_type": "Feature", "type": "has_feature"},
+                {"source_node_id": "Honda CR-V", "source_node_type": "CarModel", "target_node_id": "Infotainment", "target_node_type": "Feature", "type": "has_feature"}
+            ]
+        },
+        {
+            "nodes": [
+                {"type": "CarModel", "properties": {"name": "Honda Civic", "brand": "Honda", "segment": "Sedan"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "2.0L i-VTEC"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "6-speed manual"}},
+                {"type": "Specification", "properties": {"name": "FuelType", "value": "Petrol"}},
+                {"type": "Feature", "properties": {"name": "Safety", "value": "Airbags"}},
+                {"type": "Feature", "properties": {"name": "Infotainment", "value": "Apple CarPlay"}}
+            ],
+            "relationships": [
+                {"source_node_id": "Honda Civic", "source_node_type": "CarModel", "target_node_id": "Engine", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Civic", "source_node_type": "CarModel", "target_node_id": "Transmission", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Civic", "source_node_type": "CarModel", "target_node_id": "FuelType", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Civic", "source_node_type": "CarModel", "target_node_id": "Safety", "target_node_type": "Feature", "type": "has_feature"},
+                {"source_node_id": "Honda Civic", "source_node_type": "CarModel", "target_node_id": "Infotainment", "target_node_type": "Feature", "type": "has_feature"}
+            ]
+        },
+        {
+            "nodes": [
+                {"type": "CarModel", "properties": {"name": "Honda Accord", "brand": "Honda", "segment": "Sedan"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "2.4L DOHC i-VTEC"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "8-speed automatic"}},
+                {"type": "Specification", "properties": {"name": "FuelType", "value": "Hybrid"}},
                 {"type": "Feature", "properties": {"name": "Safety", "value": "Honda Sensing"}},
                 {"type": "Feature", "properties": {"name": "Infotainment", "value": "8-inch touchscreen"}}
             ],
             "relationships": [
-                {
-                    "source_node_id": "Honda Camry",
-                    "source_node_type": "CarModel",
-                    "target_node_id": "Engine",
-                    "target_node_type": "Specification",
-                    "type": "has_spec"
-                },
-                {
-                    "source_node_id": "Honda Camry",
-                    "source_node_type": "CarModel",
-                    "target_node_id": "Transmission",
-                    "target_node_type": "Specification",
-                    "type": "has_spec"
-                },
-                {
-                    "source_node_id": "Honda Camry",
-                    "source_node_type": "CarModel",
-                    "target_node_id": "FuelType",
-                    "target_node_type": "Specification",
-                    "type": "has_spec"
-                },
-                {
-                    "source_node_id": "Honda Camry",
-                    "source_node_type": "CarModel",
-                    "target_node_id": "Safety",
-                    "target_node_type": "Feature",
-                    "type": "has_feature"
-                },
-                {
-                    "source_node_id": "Honda Camry",
-                    "source_node_type": "CarModel",
-                    "target_node_id": "Infotainment",
-                    "target_node_type": "Feature",
-                    "type": "has_feature"
-                }
+                {"source_node_id": "Honda Accord", "source_node_type": "CarModel", "target_node_id": "Engine", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Accord", "source_node_type": "CarModel", "target_node_id": "Transmission", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Accord", "source_node_type": "CarModel", "target_node_id": "FuelType", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda Accord", "source_node_type": "CarModel", "target_node_id": "Safety", "target_node_type": "Feature", "type": "has_feature"},
+                {"source_node_id": "Honda Accord", "source_node_type": "CarModel", "target_node_id": "Infotainment", "target_node_type": "Feature", "type": "has_feature"}
+            ]
+        },
+        {
+            "nodes": [
+                {"type": "CarModel", "properties": {"name": "Honda City", "brand": "Honda", "segment": "Sedan"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "1.5L i-VTEC"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "CVT"}},
+                {"type": "Specification", "properties": {"name": "FuelType", "value": "Petrol"}},
+                {"type": "Feature", "properties": {"name": "Safety", "value": "ABS"}},
+                {"type": "Feature", "properties": {"name": "Infotainment", "value": "7-inch touchscreen"}}
+            ],
+            "relationships": [
+                {"source_node_id": "Honda City", "source_node_type": "CarModel", "target_node_id": "Engine", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda City", "source_node_type": "CarModel", "target_node_id": "Transmission", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda City", "source_node_type": "CarModel", "target_node_id": "FuelType", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda City", "source_node_type": "CarModel", "target_node_id": "Safety", "target_node_type": "Feature", "type": "has_feature"},
+                {"source_node_id": "Honda City", "source_node_type": "CarModel", "target_node_id": "Infotainment", "target_node_type": "Feature", "type": "has_feature"}
+            ]
+        },
+        {
+            "nodes": [
+                {"type": "CarModel", "properties": {"name": "Honda HR-V", "brand": "Honda", "segment": "SUV"}},
+                {"type": "Specification", "properties": {"name": "Engine", "value": "1.8L i-VTEC"}},
+                {"type": "Specification", "properties": {"name": "Transmission", "value": "CVT"}},
+                {"type": "Specification", "properties": {"name": "FuelType", "value": "Petrol"}},
+                {"type": "Feature", "properties": {"name": "Safety", "value": "Honda Sensing"}},
+                {"type": "Feature", "properties": {"name": "Infotainment", "value": "Apple CarPlay"}}
+            ],
+            "relationships": [
+                {"source_node_id": "Honda HR-V", "source_node_type": "CarModel", "target_node_id": "Engine", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda HR-V", "source_node_type": "CarModel", "target_node_id": "Transmission", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda HR-V", "source_node_type": "CarModel", "target_node_id": "FuelType", "target_node_type": "Specification", "type": "has_spec"},
+                {"source_node_id": "Honda HR-V", "source_node_type": "CarModel", "target_node_id": "Safety", "target_node_type": "Feature", "type": "has_feature"},
+                {"source_node_id": "Honda HR-V", "source_node_type": "CarModel", "target_node_id": "Infotainment", "target_node_type": "Feature", "type": "has_feature"}
             ]
         }
     ]
-
     graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USER"), password=os.getenv("NEO4J_PASSWORD")
 )
     # graph_data = parse_graph_with_llm(chunks)
