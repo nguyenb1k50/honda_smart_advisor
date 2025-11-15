@@ -42,8 +42,11 @@ graph_transformer = LLMGraphTransformer(llm=llm)
 # === Step 5: Hàm xử lý câu hỏi ===
 
 def ask_question(question):
+    print("question", question)
     # Tạo Cypher query và lấy kết quả từ Neo4j
-    raw_result = graph_chain.run(question)
+    raw_result = graph_chain.invoke({"query": question})
+
+    print("raw_result",raw_result)
     # Biến đổi dữ liệu graph thành câu trả lời tự nhiên
     return graph_transformer(raw_result)
 
